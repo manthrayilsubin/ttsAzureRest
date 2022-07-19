@@ -1,0 +1,174 @@
+import requests
+import time
+import os
+import csv
+import shutil
+#change sub key
+subscription_key = os.getenv('subkey')
+location = "eastus"
+input_file = "sentences.txt"
+output_folder = "output_mp3"
+token="";
+if not os.path.exists(output_folder):
+	os.makedirs(output_folder)
+if subscription_key == 'YOUR_SUBSCRIPTION_KEY':
+	print("Kindly modify the subscription key inside this file (line 5). \nExiting...")
+	exit()
+
+def get_token():
+	token_url = "https://{}.api.cognitive.microsoft.com/sts/v1.0/issueToken".format(location)
+	headers = {
+		'Ocp-Apim-Subscription-Key' : subscription_key
+	}
+	response = requests.post(token_url, headers=headers)
+	access_token = str(response.text)
+	return access_token
+
+def generate_speech(input_text, outfile, token):
+ time.sleep(1)
+ url = "https://{}.tts.speech.microsoft.com/cognitiveservices/v1".format(location)
+ header = {'Authorization': 'Bearer '+str(token),'Content-Type': 'application/ssml+xml','X-Microsoft-OutputFormat': 'audio-16khz-32kbitrate-mono-mp3'}
+ '''
+	You can customise your speech output here
+	by changing language, gender and name
+	'''
+ data = "<speak version='1.0' xml:lang='ml-IN'>\
+				<voice xml:lang='ml-IN' xml:gender='Female' name='ml-IN-SobhanaNeural'>\
+   <prosody rate='-8.00%'>\
+					{}\
+  </prosody>\
+				</voice>\
+		   </speak>".format(input_text).encode('utf-8')
+  #data=data.encode('utf-8')
+ try:
+  response = requests.post(url, headers=header, data=data)
+  response.raise_for_status()
+  with open(outfile, "wb") as file:
+    file.write(response.content)
+	  response.close() 
+ except Exception as e:
+   print("ERROR: ", e)
+
+def sleep_and_refresh(i):
+	if i>0 and i%7==0: # Extra sleep 
+		time.sleep(61)
+	return get_token() # Generate new token
+
+def readcsvFile():
+ rows = []
+ targetRows=[]; 
+ csvreader=""
+ header=""
+ fileTemp="inpmalVersetemp.csv"
+ fileMain="inpmalVerse.csv" 
+ if os.path.isfile(fileTemp): 
+  shutil.copy2(fileTemp,fileMain) 
+ with open(fileMain, 'r') as file:
+  csvreader = csv.reader(file)
+  header = next(csvreader)
+  for row in csvreader:
+   rows.append(row)
+ targetRows.append(header)
+ #1 Actual Verse ; 3 ChNum ; 4 VerseNume ; 6 ShortForm ; 7 Progress
+ for verse in rows:
+  if(verse[7]==""):
+    versePointer=verse[6]+" "+verse[3]+":"+verse[4];
+    print(versePointer);
+    verse[7]='Complete';
+    outfile = os.path.join(output_folder, "{}_azure.mp3".format(versePointer));
+		sentence=verse[1].replace('"','')
+    generate_speech(sentence, outfile, token)
+    targetRows.append(verse)  
+  else:
+    targetRows.append(verse)
+    
+ with open (fileTemp,'w') as f:
+    wtr = csv.writer(f,quoting=csv.QUOTE_ALL,delimiter=',')
+    wtr.writerows(targetRows)
+    f.close()  
+    
+ 
+
+#readcsvFile();
+
+if __name__ == "__main__":
+ token = get_token() # Each Token is valid for 10 minutes
+ readcsvFile()
+
+
+
+
+
+
+==========================
+
+def generate_speech(input_text, outfile, token):
+ time.sleep(1)
+ url = "https://{}.tts.speech.microsoft.com/cognitiveservices/v1".format(location)
+ header = {'Authorization': 'Bearer '+str(token),'Content-Type': 'application/ssml+xml','X-Microsoft-OutputFormat': 'audio-16khz-32kbitrate-mono-mp3'}
+ '''
+	You can customise your speech output here
+	by changing language, gender and name
+	'''
+ data = "<speak version='1.0' xml:lang='ml-IN'>\
+				<voice xml:lang='ml-IN' xml:gender='Female' name='ml-IN-SobhanaNeural'>\
+   <prosody rate='-8.00%'>\
+					{}\
+  </prosody>\
+				</voice>\
+		   </speak>".format(input_text).encode('utf-8')
+  #data=data.encode('utf-8')
+ try:
+  response = requests.post(url, headers=header, data=data)
+  response.raise_for_status()
+  with open(outfile, "wb") as file:
+    file.write(response.content)
+	  response.close() 
+ except Exception as e:
+   print("ERROR: ", e)
+
+def sleep_and_refresh(i):
+	if i>0 and i%7==0: # Extra sleep 
+		time.sleep(61)
+	return get_token() # Generate new token
+
+def readcsvFile():
+ rows = []
+ targetRows=[]; 
+ csvreader=""
+ header=""
+ fileTemp="inpmalVersetemp.csv"
+ fileMain="inpmalVerse.csv" 
+ if os.path.isfile(fileTemp): 
+  shutil.copy2(fileTemp,fileMain) 
+ with open(fileMain, 'r') as file:
+  csvreader = csv.reader(file)
+  header = next(csvreader)
+  for row in csvreader:
+   rows.append(row)
+ targetRows.append(header)
+ #1 Actual Verse ; 3 ChNum ; 4 VerseNume ; 6 ShortForm ; 7 Progress
+ for verse in rows:
+  if(verse[7]==""):
+    versePointer=verse[6]+" "+verse[3]+":"+verse[4];
+    print(versePointer);
+    verse[7]='Complete';
+    outfile = os.path.join(output_folder, "{}_azure.mp3".format(versePointer));
+		sentence=verse[1].replace('"','')
+    generate_speech(sentence, outfile, token)
+    targetRows.append(verse)  
+  else:
+    targetRows.append(verse)
+    
+ with open (fileTemp,'w') as f:
+    wtr = csv.writer(f,quoting=csv.QUOTE_ALL,delimiter=',')
+    wtr.writerows(targetRows)
+    f.close()  
+    
+ 
+
+#readcsvFile();
+
+if __name__ == "__main__":
+ token = get_token() # Each Token is valid for 10 minutes
+ readcsvFile()

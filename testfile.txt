@@ -1,0 +1,2 @@
+cat 'Gen 1:1_azure.mp3' 'Gen 1:2_azure.mp3' > out.mp3
+cat *.mp3 > out.mp3
