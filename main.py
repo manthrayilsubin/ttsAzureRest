@@ -72,10 +72,10 @@ def readcsvFile():
  #1 Actual Verse ; 3 ChNum ; 4 VerseNume ; 6 ShortForm ; 7 Progress
  for verse in rows:
   if(verse[7]==""):
-    versePointer=verse[6]+" "+verse[3]+":"+verse[4];
+    versePointer=str(verse[0])+"_"+verse[6]+" "+verse[3]+":"+verse[4];
     print(versePointer);
     verse[7]='Complete';
-    outfile = os.path.join(output_folder, "{}_azure.mp3".format(versePointer));
+    outfile = os.path.join(output_folder, "{}_malVerse.mp3".format(versePointer));
     sentence=verse[1].replace("\"","")
     generate_speech(sentence, outfile, token)
     targetRows.append(verse)  
